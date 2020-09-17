@@ -2,7 +2,7 @@ import { NowRequest, NowResponse } from '@vercel/node'
 import fetch, { Headers } from 'node-fetch'
 import { userAgent } from '../../utils/dumbHeaders'
 
-const userpicHandler = async ({ query: { username = '', ig_id = '' } }: NowRequest, res: NowResponse) => {
+const userpicHandler = async ({ query: { username = '', ig_id = '', rawResponse = '' } }: NowRequest, res: NowResponse) => {
 
     if (username == '' && ig_id == '') {
         return res.status(500).send('Neither username nor ig_id was provided.')
@@ -17,8 +17,17 @@ const userpicHandler = async ({ query: { username = '', ig_id = '' } }: NowReque
             }
             return res.status(200).json(userpic)
 
-        } catch (err) { return res.status(500).send('[Get Ig Userpic By ID] error error: ' + err) }
+        } catch (err) {  console.log('IG Id Error: ', err); return res.status(500).send('[Get Ig Userpic By ID] error error: ' + err) }
     }
+
+
+
+
+
+
+
+
+
 
 
 
@@ -27,6 +36,11 @@ const userpicHandler = async ({ query: { username = '', ig_id = '' } }: NowReque
     try {
 
         if (typeof username === 'string') {
+
+            if (rawResponse === 'true') {
+                await getUserPic(username, res)
+                return;
+            }
 
             userpic = await getUserPic(username)
             console.log('[Get userpic by name]: nice')
@@ -63,6 +77,7 @@ export const getUserPicByIGId = async (ig_id: string): Promise<string> => {
 
     } catch (err) {
         console.log('[IG Get userpic by id] Error: ', err)
+        throw new Error('Bad IG id')
     }
 
 }
@@ -84,6 +99,13 @@ export const getUserPic = async (username: string, res?: NowResponse): Promise<s
                 'scale=2.00; 828x1792; 165586599)'
         })
         igResponce = await fetch(url, { headers })
+
+        if (res) {
+            res.status(222).send(await igResponce.text())
+
+            return;
+        }
+
 
         // const text = await igResponce.text()
         // console.log('Userpic: Responce: ', text)
